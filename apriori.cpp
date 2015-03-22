@@ -5,6 +5,8 @@
 #include<algorithm>
 #include<vector>
 
+using namespace std;
+
 FILE *input;
 FILE *output;
 
@@ -17,8 +19,16 @@ int cnt_l_pre;
 int cnt_c = 0;
 int cnt_k;
 
-int transaction[1000][30];
-int chk[100000];
+// int transaction[1000][30];
+vector<vector<int>> transaction;
+
+typedef struct _tid_List{
+	int data;
+	vector<int> list;
+}tid_list;
+
+vector<tid_list> vertical_type;
+int mapDataToVID[100000]; // mapping data to vertical type idx
 
 int L[100000][10];
 int C[100000][10];
@@ -27,22 +37,16 @@ float sup[100000];
 int vertical[30][1000];
 int cnt_v[30];
 
-using namespace std;
 
 void init(){
 	int i, j;
-	for (i = 0; i < 1000; i++){
-		for (j = 0; j < 30; j++){
-			transaction[i][j] = -1;
-		}
-	}
 
 	for (i = 0; i < 100000; i++){
 		for (j = 0; j < 10; j++){
 			L[i][j] = C[i][j] = -1;
 		}
+		mapDataToVID[i] = -1;
 		sup[i] = 0;
-		chk[i] = 0;
 	}
 
 	for (i = 0; i < 30; i++){
@@ -55,31 +59,28 @@ void init(){
 
 void printTransaction(){
 	int i, j;
-	for (i = 0; i < cnt_t; i++){
-		j = 0;
-		while (transaction[i][j] >= 0){
+	for (i = 0; i < transaction.size(); i++){
+		for (j = 0; j < transaction[i].size(); j++){
 			printf("%d ", transaction[i][j]);
-			j++;
 		}
 		printf("\n");
 	}
-	printf("transaction count is %d\n", cnt_t);
+	printf("transaction count is %d\n", transaction.size());
 }
 
 void printVertical(){
 	int i, j;
 
-	printf("print Vertical array\n");
+	printf("print Vertical type\n");
 
-	for (i = 0; i < 30; i++){
-		if (cnt_v[i]>0){
-			printf("%d : ", i);
-			for (j = 0; j<cnt_v[i]; j++){
-				printf("t%d ", vertical[i][j]);
-			}
-			printf("\n");
+	for (i = 0; i < vertical_type.size(); i++){
+		printf("%d : {", vertical_type[i].data);
+		for (j = 0; j < vertical_type[i].list.size(); j++){
+			printf("%d ", vertical_type[i].list[j]);
 		}
+		printf("}\n");
 	}
+	printf("vertical type count is %d\n", vertical_type.size());
 }
 
 void findIntersection(vector<int> &target){
@@ -87,7 +88,7 @@ void findIntersection(vector<int> &target){
 	int i;
 	int targetSize = target.size();
 	printf("target array size is %d\n", targetSize);
-	for (i = 0; i<targetSize - 1; i++){
+	for (i = 0; i < targetSize - 1; i++){
 		printf("%d, ", target[i]);
 	}
 	printf("%d\n", target[targetSize - 1]);
@@ -103,18 +104,20 @@ printf("\n");
 }
 */
 
+/*
 void generateL1(){
-	int i;
-	printf("generateL1\n");
-	//printChk();
-	for (i = 0; i < 100000; i++){
-		if (chk[i] == 1){
-			L[cnt_l][0] = i;
-			cnt_l++;
-		}
-	}
-	cnt_l_pre = 0;
+int i;
+printf("generateL1\n");
+//printChk();
+for (i = 0; i < 100000; i++){
+if (chk[i] == 1){
+L[cnt_l][0] = i;
+cnt_l++;
 }
+}
+cnt_l_pre = 0;
+}
+*/
 
 void printL(int k){
 	int i, j;
@@ -197,15 +200,15 @@ void scanning(int cnt_k){
 		for (ti = 0; ti < cnt_t; ti++){
 			for (cki = 0; cki < cnt_k; cki++){
 				tki = 0;
-				while (C[ci][cki] != transaction[ti][tki] && transaction[ti][tki]>-1){
+				while (C[ci][cki] != transaction[ti][tki] && transaction[ti][tki] > -1){
 					tki++;
 				}
-				if (transaction[ti][tki]<0 || tki>30){
+				if (transaction[ti][tki] < 0 || tki>30){
 					// no exist
 					break;
 				}
 			}
-			if (cki>cnt_k){
+			if (cki > cnt_k){
 				// exist
 				sup[ci]++;
 			}
@@ -255,33 +258,40 @@ int main(int argc, char* argv[]){
 		if (fgets(str, sizeof(str), input)){
 			token = strtok(str, "\t");
 			int i;
+			vector<int> transaction_temp;
 			for (i = 0; token != NULL; i++){
 				temp = atoi(token);
-				transaction[cnt_t][i] = temp;
-				if (chk[temp] == 0)
-					chk[temp] = 1;
-				vertical[temp][cnt_v[temp]++] = cnt_t;
+				transaction_temp.push_back(temp);
+
+				if (mapDataToVID[temp] == -1){
+					tid_list temp_list;
+					temp_list.data = temp;
+
+					vertical_type.push_back(temp_list);
+					mapDataToVID[temp] = vertical_type.size() - 1;
+				}
+
+				vertical_type[mapDataToVID[temp]].list.push_back(transaction.size());
+
 				token = strtok(NULL, "\t");
 			}
-			sort(transaction[cnt_t], transaction[cnt_t] + i);
-			cnt_t++;
+			sort(transaction_temp.begin(), transaction_temp.end());
+			transaction.push_back(transaction_temp);
 		}
 	}
 
-	//	printTransaction();
+	printTransaction();
 
-
-
-	//	printVertical();
+	printVertical();
 
 	min_sup = atoi(argv[1]);
 	min_sup_num = min_sup * cnt_t / 100;
 
 	printf("min_sup is %d\n", min_sup_num);
 
-	generateL1();
+	//generateL1();
 
-	printL(1);
+	//printL(1);
 
 	vector<int> target;
 	target.push_back(1);
