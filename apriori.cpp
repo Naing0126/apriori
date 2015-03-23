@@ -13,12 +13,6 @@ FILE *output;
 int min_sup;
 int min_sup_num;
 
-int cnt_t = 0;
-int cnt_l = 0;
-int cnt_l_pre;
-int cnt_c = 0;
-int cnt_k;
-
 vector<vector<int>> transaction;
 
 typedef struct _tid_List{
@@ -267,10 +261,12 @@ void scanning(int k){
 	for (i = 0; i < C[k - 1].size(); i++){
 		int cnt = findIntersection(C[k - 1][i]);
 		int j;
+		/*
 		printf("[");
 		for (j = 0; j < C[k - 1][i].size(); j++)
 			printf("%d ", C[k - 1][i][j]);
 		printf("] = %d\n",cnt);
+		*/
 		if (cnt >= min_sup_num){
 			temp_L_list.push_back(C[k - 1][i]);
 			freq_Itemsets.push_back(C[k - 1][i]);
@@ -312,7 +308,8 @@ void find_subset(int k,int l,vector<int> pre, vector<int> total){
 		}
 		print_subset(aft);
 		fprintf(output, "\t");
-		fprintf(output, "%.2f\t%.2f\n", (float)sup_total * 100 / (float)transaction.size(), (float)sup_total * 100 / (float)sup_pre);
+		// printf("sup_total : %d, transaction size : %d\n", sup_total, transaction.size());
+		fprintf(output, "%.2lf\t%.2lf\n", (double)(sup_total * 100) / (double)transaction.size(), (double)sup_total * 100 / (double)sup_pre);
 		return;
 	}
 }
@@ -390,7 +387,7 @@ int main(int argc, char* argv[]){
 		if (apriori_gen(k)){
 		//	printC(k);
 			scanning(k);
-			printL(k);
+		//	printL(k);
 		}
 		else
 			break;
