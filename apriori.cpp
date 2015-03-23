@@ -29,30 +29,17 @@ typedef struct _tid_List{
 vector<tid_list> vertical_type;
 int mapDataToVID[100000]; // mapping data to vertical type idx
 
-//int L[100000][10];
 vector<vector<vector<int>>> L;
-//int C[100000][10];
 vector<vector<vector<int>>> C;
 
-float sup[100000];
-
-int vertical[30][1000];
-int cnt_v[30];
-
+vector<vector<int>> freq_Itemsets;
+vector<vector<int>, vector<int>> rules;
 
 void init(){
 	int i, j;
 
 	for (i = 0; i < 100000; i++){
 		mapDataToVID[i] = -1;
-		sup[i] = 0;
-	}
-
-	for (i = 0; i < 30; i++){
-		for (j = 0; j < 1000; j++){
-			vertical[i][j] = -1;
-		}
-		cnt_v[i] = 0;
 	}
 }
 
@@ -149,7 +136,7 @@ vector<vector<int>> join(int k){
 	int i, j;
 	int ida = 0,idb = 0;
 
-	printf("L[%d]'s size is %d\n", k, L[k - 1].size());
+//	printf("L[%d]'s size is %d\n", k, L[k - 1].size());
 
 	vector<vector<int>> temp_c_list;
 
@@ -284,24 +271,63 @@ void scanning(int k){
 		for (j = 0; j < C[k - 1][i].size(); j++)
 			printf("%d ", C[k - 1][i][j]);
 		printf("] = %d\n",cnt);
-		if (cnt >= min_sup_num)
+		if (cnt >= min_sup_num){
 			temp_L_list.push_back(C[k - 1][i]);
+			freq_Itemsets.push_back(C[k - 1][i]);
+		}
 	}
 	L.push_back(temp_L_list);
 }
 
-void printCandidates(){
-	// cnt_l_pre까지의 L을 출력
-	int i, j;
-	printf("print Candidates\n");
-	for (i = 0; i < cnt_l_pre; i++){
-		for (j = 0; j < cnt_k; j++){
-			printf("%d ", L[i][j]);
+void print_subset(vector<int> subset){
+	int i=0;
+	fprintf(output, "{%d", subset[i]);
+	for (i = 1; i < subset.size(); i++)
+		fprintf(output, ",%d", subset[i]);
+	fprintf(output, "}");
+}
+
+void find_subset(int k,int l,vector<int> pre, vector<int> total){
+	int ti;
+	if (pre.size() < k){
+		for (ti = l + 1; ti < total.size(); ti++){
+			pre.push_back(total[ti]);
+			find_subset(k, ti, pre, total);
+			pre.pop_back();
 		}
-		printf("\n");
+	}
+	else{
+		int sup_pre = findIntersection(pre);
+		int sup_total = findIntersection(total);
+
+		print_subset(pre);
+		fprintf(output, "\t");
+		
+		vector<int> aft = total;
+		int pi;
+		for (pi = 0; pi < pre.size(); pi++){
+			vector<int>::iterator it = find(aft.begin(), aft.end(), pre[pi]);
+			int pos = distance(aft.begin(), it);
+			aft.erase(aft.begin()+pos);
+		}
+		print_subset(aft);
+		fprintf(output, "\t");
+		fprintf(output, "%.2f\t%.2f\n", (float)sup_total * 100 / (float)transaction.size(), (float)sup_total * 100 / (float)sup_pre);
+		return;
 	}
 }
 
+void rule_gen(){
+	// freq_Itemsets들로 rule을 만듦
+	int i, j;
+	printf("Generate Rules\n");
+	for (i = 0; i < freq_Itemsets.size() ; i++){
+		for (j = 1; j < freq_Itemsets[i].size(); j++){
+			vector<int> pre;
+			find_subset(j, -1, pre, freq_Itemsets[i]);
+		}
+	}
+}
 
 int main(int argc, char* argv[]){
 	int num;
@@ -316,6 +342,8 @@ int main(int argc, char* argv[]){
 	}
 
 	input = fopen(argv[2], "r");
+	// write to output file
+	output = fopen(argv[3], "w");
 
 	init();
 
@@ -348,7 +376,7 @@ int main(int argc, char* argv[]){
 
 //	printTransaction();
 
-	printVertical();
+//	printVertical();
 
 	min_sup = atoi(argv[1]);
 	min_sup_num = min_sup * transaction.size() / 100;
@@ -360,7 +388,7 @@ int main(int argc, char* argv[]){
 	int k;
 	for (k = 2; k < vertical_type.size() ;k++){
 		if (apriori_gen(k)){
-			printC(k);
+		//	printC(k);
 			scanning(k);
 			printL(k);
 		}
@@ -368,9 +396,10 @@ int main(int argc, char* argv[]){
 			break;
 	}
 
-	// write to output file
-	output = fopen(argv[3], "w");
-	fprintf(output, "hello");
+	rule_gen();
+
+	
+	
 	fclose(output);
 	return 0;
 }
