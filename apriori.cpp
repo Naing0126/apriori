@@ -174,22 +174,22 @@ bool pruning(int k, vector<vector<int>> temp_c_list){
 			vector<int> temp = temp_c_list[C_id];
 			temp.erase(temp.begin() + i);
 			for (L_id = 0; L_id < L[k - 2].size(); L_id++){
-				if (L[k - 2][L_id][0] != temp[0])
-					continue;
-
-				else{
-					if (k>2 && L[k - 2][L_id][1] != temp[1])
+				if (L[k - 2][L_id][0] != temp[0]){
+					if (L[k - 2][L_id][0] > temp[0]){
+						flag = 0;
+						break;
+					} else{
 						continue;
+					}
 				}
 
-				if (equal(temp.begin(), temp.end(), L[k - 2][L_id].begin())){
+				else if(equal(temp.begin(), temp.end(), L[k - 2][L_id].begin())){
+					flag = 1;
 					break;
 				}
 			}
-			if (L_id == L[k - 2].size()){
-				flag = 0;
+			if (flag == 0 || L_id == L[k - 2].size())
 				break;
-			}
 		}
 		if (flag == 1){
 			pruned_c_list.push_back(temp_c_list[C_id]);
