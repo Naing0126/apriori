@@ -71,11 +71,11 @@ void generateL1(){
 	vector<vector<int>> L1;
 	vector<vector<int>> C1;
 
-	for (i = 0; i < vertical_type.size() ; i++){
+	for (i = 0; i < vertical_type.size(); i++){
 		vector<int> temp;
 		temp.push_back(vertical_type[i].data);
 		C1.push_back(temp);
-		if (vertical_type[i].list.size()>=min_sup_num)
+		if (vertical_type[i].list.size() >= min_sup_num)
 			L1.push_back(temp);
 	}
 	sort(C1.begin(), C1.end());
@@ -83,15 +83,15 @@ void generateL1(){
 
 	sort(L1.begin(), L1.end());
 	L.push_back(L1);
-	
+
 }
 
 void printL(int k){
 	int i, j;
 	printf("printL%d\n", k);
-	for (i = 0; i < L[k-1].size(); i++){
+	for (i = 0; i < L[k - 1].size(); i++){
 		for (j = 0; j < L[k - 1][i].size(); j++){
-			printf("%d ", L[k-1][i][j]);
+			printf("%d ", L[k - 1][i][j]);
 		}
 		printf("\n");
 	}
@@ -124,56 +124,35 @@ bool isExist(vector<vector<int>> list, vector<int> target){
 	return false;
 }
 
+void printVector(vector<int> temp){
+	int i;
+	printf("%d : ", temp.size());
+	for (i = 0; i<temp.size(); i++){
+		printf("%d ", temp[i]);
+	}
+}
+
 // self-joining Lk and make Ck+1 candidates
 vector<vector<int>> join(int k){
 	printf("self-joining L%d\n", k);
 	int i, j;
-	int ida = 0,idb = 0;
+	int ida = 0, idb = 0;
 	vector<vector<int>> temp_c_list;
+	for (i = 0; i < L[k - 1].size(); i++){
+		for (j = i + 1; j < L[k - 1].size(); j++){
+			if (k>1 && L[k - 1][i][k - 2] != L[k - 1][j][k - 2])
+				break;
+			vector<int> temp_c;
+			int idx = 0;
 
-	for (i = 0; i < L[k-1].size(); i++){
-		for (j = i + 1; j < L[k-1].size(); j++){
-			int dif_cnt = 0;
-			int dif_data;
-			int ida = 0;
-			int idb = 0;
-			int flag = 1; // 1 : enable, 0 : not enable
-			
-			while (ida<k && idb<k){
-				if (L[k - 1][i][ida] != L[k - 1][j][idb]){
-					dif_cnt++;
-					if (dif_cnt > 1){
-						// when different data cnt is more than 1, join is not enable
-						flag = 0;
-						break;
-					}
-					if (L[k - 1][i][ida] < L[k - 1][j][idb]){
-						dif_data = L[k - 1][i][ida];
-						idb--;
-					}else{
-						dif_data = L[k - 1][j][idb];
-						ida--;
-					}
-				}
-				ida++;idb++;
+			while (idx<k - 1){
+				temp_c.push_back(L[k - 1][i][idx]);
+				idx++;
 			}
-			if (flag == 1){
-				// join
-				int join_id;
-				vector<int> temp_c;
-				vector<int> target;
-				if (ida == k){
-					target = L[k - 1][j];
-				}else{
-					target = L[k - 1][i];
-				}
-				for (join_id = 0; join_id < k; join_id++)
-					temp_c.push_back(target[join_id]);
-				temp_c.push_back(dif_data);
-				sort(temp_c.begin(), temp_c.end());
-				if (!isExist(temp_c_list,temp_c))
-					temp_c_list.push_back(temp_c);
-			}
+			temp_c.push_back(L[k - 1][i][idx]);
+			temp_c.push_back(L[k - 1][j][idx]);
+
+			temp_c_list.push_back(temp_c);
 		}
 	}
 	return temp_c_list;
@@ -193,13 +172,21 @@ bool pruning(int k, vector<vector<int>> temp_c_list){
 		int flag = 1;
 		for (i = 0; i < k - 1; i++){
 			vector<int> temp = temp_c_list[C_id];
-			temp.erase(temp.begin()+i);
+			temp.erase(temp.begin() + i);
 			for (L_id = 0; L_id < L[k - 2].size(); L_id++){
-				if (equal(temp.begin(),temp.end(),L[k-2][L_id].begin())){
+				if (L[k - 2][L_id][0] != temp[0])
+					continue;
+
+				else{
+					if (k>2 && L[k - 2][L_id][1] != temp[1])
+						continue;
+				}
+
+				if (equal(temp.begin(), temp.end(), L[k - 2][L_id].begin())){
 					break;
 				}
 			}
-			if (L_id==L[k-2].size()){
+			if (L_id == L[k - 2].size()){
 				flag = 0;
 				break;
 			}
@@ -208,7 +195,7 @@ bool pruning(int k, vector<vector<int>> temp_c_list){
 			pruned_c_list.push_back(temp_c_list[C_id]);
 		}
 	}
-	
+
 	if (pruned_c_list.size() > 0){
 		C.push_back(pruned_c_list);
 		return true;
@@ -227,14 +214,14 @@ int findSupport(vector<int> data_set){
 	int i;
 
 	vector<int> result = vertical_type[mapDataToVID[data_set[0]]].list;
-	
+
 	for (i = 1; i < data_set.size(); i++){
 		vector<int> temp(transaction.size());
 		vector<int>::iterator it;
 		vector<int> target = vertical_type[mapDataToVID[data_set[i]]].list;
 
-		it = set_intersection(result.begin(), result.end(), target.begin(), 
-			target.end(),temp.begin());
+		it = set_intersection(result.begin(), result.end(), target.begin(),
+			target.end(), temp.begin());
 		temp.resize(it - temp.begin());
 
 		result.clear();
@@ -247,26 +234,8 @@ int findSupport(vector<int> data_set){
 	return result.size();
 }
 
-// calculate Ck's support and filtering Ck which doesn't satisfy min_sup
-void scanning(int k){
-	printf("scanning C%d\n",k);
-	int i;
-
-	vector<vector<int>> temp_L_list;
-
-	for (i = 0; i < C[k - 1].size(); i++){
-		int cnt = findSupport(C[k - 1][i]);
-		int j;
-		if (cnt >= min_sup_num){
-			temp_L_list.push_back(C[k - 1][i]);
-			freq_Itemsets.push_back(C[k - 1][i]);
-		}
-	}
-	L.push_back(temp_L_list);
-}
-
 void print_subset(vector<int> subset){
-	int i=0;
+	int i = 0;
 	fprintf(output, "{%d", subset[i]);
 	for (i = 1; i < subset.size(); i++)
 		fprintf(output, ",%d", subset[i]);
@@ -274,7 +243,7 @@ void print_subset(vector<int> subset){
 }
 
 // find all subset by recursion
-void find_subset(int k,int l,vector<int> pre, vector<int> total){
+void find_subset(int k, int l, vector<int> pre, vector<int> total){
 	int ti;
 	if (pre.size() < k){
 		for (ti = l + 1; ti < total.size(); ti++){
@@ -289,35 +258,61 @@ void find_subset(int k,int l,vector<int> pre, vector<int> total){
 
 		print_subset(pre);
 		fprintf(output, "\t");
-		
+
 		vector<int> aft = total;
 		int pi;
 		for (pi = 0; pi < pre.size(); pi++){
 			vector<int>::iterator it = find(aft.begin(), aft.end(), pre[pi]);
 			int pos = distance(aft.begin(), it);
-			aft.erase(aft.begin()+pos);
+			aft.erase(aft.begin() + pos);
 		}
 		print_subset(aft);
 		fprintf(output, "\t");
-		fprintf(output, "%.2lf\t%.2lf\n", 
-			(double)(sup_total * 100) / (double)transaction.size(), 
+		fprintf(output, "%.2lf\t%.2lf\n",
+			(double)(sup_total * 100) / (double)transaction.size(),
 			(double)sup_total * 100 / (double)sup_pre);
 		return;
 	}
 }
 
-// generate rule with freq_Itemsets
-void rule_gen(){
-	int i, j;
-	printf("Generate Rules\n");
-	for (i = 0; i < freq_Itemsets.size() ; i++){
-		for (j = 1; j < freq_Itemsets[i].size(); j++){
-			vector<int> pre;
-			find_subset(j, -1, pre, freq_Itemsets[i]);
+
+// calculate Ck's support and filtering Ck which doesn't satisfy min_sup
+void scanning(int k){
+	printf("scanning C%d\n", k);
+	int i;
+
+	vector<vector<int>> temp_L_list;
+
+	for (i = 0; i < C[k - 1].size(); i++){
+		int cnt = findSupport(C[k - 1][i]);
+
+		if (cnt >= min_sup_num){
+			temp_L_list.push_back(C[k - 1][i]);
+			freq_Itemsets.push_back(C[k - 1][i]);
+			int j;
+			for (j = 1; j < freq_Itemsets[freq_Itemsets.size() - 1].size(); j++){
+				vector<int> pre;
+				find_subset(j, -1, pre, freq_Itemsets[freq_Itemsets.size() - 1]);
+			}
 		}
 	}
+	L.push_back(temp_L_list);
 }
 
+
+/*
+// generate rule with freq_Itemsets
+void rule_gen(){
+int i, j;
+printf("Generate Rules\n");
+for (i = 0; i < freq_Itemsets.size() ; i++){
+for (j = 1; j < freq_Itemsets[i].size(); j++){
+vector<int> pre;
+find_subset(j, -1, pre, freq_Itemsets[i]);
+}
+}
+}
+*/
 int main(int argc, char* argv[]){
 	int num;
 	char c;
@@ -370,10 +365,10 @@ int main(int argc, char* argv[]){
 
 	// generate C1 and L1
 	generateL1();
-	
+
 	int k;
 	// generate frequent itemsets
-	for (k = 2; k < vertical_type.size() ;k++){
+	for (k = 2; k < vertical_type.size(); k++){
 		if (apriori_gen(k)){
 			scanning(k);
 		}
@@ -382,8 +377,8 @@ int main(int argc, char* argv[]){
 	}
 
 	// generate rules
-	rule_gen();
-	
+	//rule_gen();
+
 	fclose(output);
 	return 0;
 }
