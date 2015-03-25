@@ -243,18 +243,17 @@ void print_subset(vector<int> subset){
 }
 
 // find all subset by recursion
-void find_subset(int k, int l, vector<int> pre, vector<int> total){
+void find_subset(int k, int l, vector<int> pre, vector<int> total, int sup_total){
 	int ti;
 	if (pre.size() < k){
 		for (ti = l + 1; ti < total.size(); ti++){
 			pre.push_back(total[ti]);
-			find_subset(k, ti, pre, total);
+			find_subset(k, ti, pre, total,sup_total);
 			pre.pop_back();
 		}
 	}
 	else{
 		int sup_pre = findSupport(pre);
-		int sup_total = findSupport(total);
 
 		print_subset(pre);
 		fprintf(output, "\t");
@@ -288,31 +287,16 @@ void scanning(int k){
 
 		if (cnt >= min_sup_num){
 			temp_L_list.push_back(C[k - 1][i]);
-			freq_Itemsets.push_back(C[k - 1][i]);
 			int j;
-			for (j = 1; j < freq_Itemsets[freq_Itemsets.size() - 1].size(); j++){
+			for (j = 1; j < C[k - 1][i].size(); j++){
 				vector<int> pre;
-				find_subset(j, -1, pre, freq_Itemsets[freq_Itemsets.size() - 1]);
+				find_subset(j, -1, pre, C[k - 1][i],cnt);
 			}
 		}
 	}
 	L.push_back(temp_L_list);
 }
 
-
-/*
-// generate rule with freq_Itemsets
-void rule_gen(){
-int i, j;
-printf("Generate Rules\n");
-for (i = 0; i < freq_Itemsets.size() ; i++){
-for (j = 1; j < freq_Itemsets[i].size(); j++){
-vector<int> pre;
-find_subset(j, -1, pre, freq_Itemsets[i]);
-}
-}
-}
-*/
 int main(int argc, char* argv[]){
 	int num;
 	char c;
